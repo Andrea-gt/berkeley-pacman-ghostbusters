@@ -265,7 +265,17 @@ class ParticleFilter(InferenceModule):
         Storing your particles as a Counter (where there could be an associated
         weight with each position) is incorrect and may produce errors.
         """
-        "*** YOUR CODE HERE ***"
+        particle_number = self.numParticles
+        legal_positions = self.legalPositions
+        particles = []
+
+        while len(particles) < particle_number:
+            for legal in legal_positions:
+                if len(particles) < particle_number:
+                    particles.append(legal)
+
+        # Assign the generated particles to the instance variable
+        self.particles = particles
 
     def observe(self, observation, gameState):
         """
@@ -297,8 +307,11 @@ class ParticleFilter(InferenceModule):
         noisyDistance = observation
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #particle_distance = util.manhattanDistance(, pacmanPosition)
+
+        particle_sample = util.sample(emissionModel)
+        print(particle_sample)
+
 
     def elapseTime(self, gameState):
         """
@@ -324,9 +337,17 @@ class ParticleFilter(InferenceModule):
         essentially converts a list of particles into a belief distribution (a
         Counter object)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        belief_distribution = util.Counter()
 
+        for particle in self.particles:
+            belief_distribution[particle] += 1
+
+        belief_distribution.normalize()
+
+        # Return 'belief_distribution'
+        return belief_distribution
+
+    
 class MarginalInference(InferenceModule):
     """
     A wrapper around the JointInference module that returns marginal beliefs
