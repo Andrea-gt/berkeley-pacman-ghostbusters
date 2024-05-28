@@ -306,12 +306,36 @@ class ParticleFilter(InferenceModule):
         """
         noisyDistance = observation
         emissionModel = busters.getObservationDistribution(noisyDistance)
+        updated_particles = [] 
+
         pacmanPosition = gameState.getPacmanPosition()
         #particle_distance = util.manhattanDistance(, pacmanPosition)
 
-        particle_sample = util.sample(emissionModel)
-        print(particle_sample)
+        # When a ghost is captured by Pacman
+        # all particles should be updated so that 
+        # the ghost appears in its prison cell,
+        if noisyDistance is None:
+            for particle in self.particles:
+                updated_particles.append(self.getJailPosition())
+            self.particles = updated_particles
 
+        else:
+            allPossible = util.Counter()
+            prev_info =  self.getBeliefDistribution() # Previous Distribution
+            for legal in self.legalPositions:
+                trueDistance = util.manhattanDistance(legal, pacmanPosition)
+                allPossible[legal] += emissionModel[trueDistance] * prev_info[legal]
+        
+            # When all particles receive 0 weight
+            # they should be recreated from the prior distribution by calling initializeUniformly
+            if allPossible.totalCount() == 0:
+                self.initializeUniformly(gameState=gameState)
+
+            else:
+                for particle_sample in self.particles:
+                    sample_dist = util.sample(allPossible)
+                    updated_particles.append(sample_dist)  
+                self.particles = updated_particles
 
     def elapseTime(self, gameState):
         """
